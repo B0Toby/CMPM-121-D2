@@ -9,15 +9,25 @@ body {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
+h1 {
+  margin: 16px 0 8px;
+  font-size: 28px;
+}
+
 .stage {
   border: 1px solid #111;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  background: white;
-  image-rendering: crisp-edges;
+  background: #fff;
 }
 
-h1 {
-  font-size: 28px;
-  margin: 16px 0 8px;
+.btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f6f6f6;
+  cursor: pointer;
+}
+.btn:hover {
+  background: #eee;
 }
