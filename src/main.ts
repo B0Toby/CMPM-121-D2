@@ -17,27 +17,45 @@ ctx.strokeStyle = "#222";
 
 type Point = { x: number; y: number };
 
-const lines: Point[][] = [];
-const redoLines: Point[][] = [];
+interface DisplayCommand {
+  display(ctx: CanvasRenderingContext2D): void;
+}
 
-let currentLine: Point[] | null = null;
+class MarkerLine implements DisplayCommand {
+  private points: Point[];
+
+  constructor(start: Point) {
+    this.points = [start];
+  }
+
+  drag(x: number, y: number) {
+    this.points.push({ x, y });
+  }
+
+  display(ctx: CanvasRenderingContext2D) {
+    if (this.points.length < 2) return;
+    ctx.beginPath();
+    ctx.moveTo(this.points[0].x, this.points[0].y);
+    for (let i = 1; i < this.points.length; i++) {
+      const p = this.points[i];
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+  }
+}
+
+const commands: DisplayCommand[] = [];
+const redoCommands: DisplayCommand[] = [];
+
+let currentLine: MarkerLine | null = null;
 let drawing = false;
 
 canvas.addEventListener("drawing-changed", () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (const cmd of commands) cmd.display(ctx);
 
-  for (const line of lines) {
-    if (line.length < 2) continue;
-    ctx.beginPath();
-    ctx.moveTo(line[0].x, line[0].y);
-    for (let i = 1; i < line.length; i++) {
-      ctx.lineTo(line[i].x, line[i].y);
-    }
-    ctx.stroke();
-  }
-
-  undoBtn.disabled = lines.length === 0;
-  redoBtn.disabled = redoLines.length === 0;
+  undoBtn.disabled = commands.length === 0;
+  redoBtn.disabled = redoCommands.length === 0;
 });
 
 const changed = () => canvas.dispatchEvent(new Event("drawing-changed"));
@@ -45,17 +63,15 @@ const pt = (e: MouseEvent): Point => ({ x: e.offsetX, y: e.offsetY });
 
 canvas.addEventListener("mousedown", (e: MouseEvent) => {
   drawing = true;
-  currentLine = [];
-  lines.push(currentLine);
-
-  redoLines.length = 0;
-  currentLine.push(pt(e));
+  currentLine = new MarkerLine(pt(e));
+  commands.push(currentLine);
+  redoCommands.length = 0;
   changed();
 });
 
 canvas.addEventListener("mousemove", (e: MouseEvent) => {
   if (!drawing || !currentLine) return;
-  currentLine.push(pt(e));
+  currentLine.drag(e.offsetX, e.offsetY);
   changed();
 });
 
@@ -87,23 +103,23 @@ redoBtn.className = "btn";
 controls.appendChild(redoBtn);
 
 clearBtn.addEventListener("click", () => {
-  lines.length = 0;
-  redoLines.length = 0;
+  commands.length = 0;
+  redoCommands.length = 0;
   currentLine = null;
   changed();
 });
 
 undoBtn.addEventListener("click", () => {
-  if (lines.length === 0) return;
-  const popped = lines.pop()!;
-  redoLines.push(popped);
+  if (commands.length === 0) return;
+  const popped = commands.pop()!;
+  redoCommands.push(popped);
   changed();
 });
 
 redoBtn.addEventListener("click", () => {
-  if (redoLines.length === 0) return;
-  const popped = redoLines.pop()!;
-  lines.push(popped);
+  if (redoCommands.length === 0) return;
+  const popped = redoCommands.pop()!;
+  commands.push(popped);
   changed();
 });
 
