@@ -31,3 +31,23 @@ h1 {
 .btn:hover {
   background: #eee;
 }
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+}
+
+.tool-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f6f6f6;
+  cursor: pointer;
+}
+.tool-btn:hover {
+  background: #eee;
+}
+.tool-btn.selected {
+  outline: 2px solid #4a90e2;
+  background: #eaf2ff;
+}

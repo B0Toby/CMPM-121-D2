@@ -4,6 +4,32 @@ const title = document.createElement("h1");
 title.textContent = "Sticker Sketchpad";
 document.body.appendChild(title);
 
+const toolbar = document.createElement("div");
+toolbar.className = "toolbar";
+document.body.appendChild(toolbar);
+
+const thinBtn = document.createElement("button");
+thinBtn.textContent = "Thin";
+thinBtn.className = "tool-btn selected";
+toolbar.appendChild(thinBtn);
+
+const thickBtn = document.createElement("button");
+thickBtn.textContent = "Thick";
+thickBtn.className = "tool-btn";
+toolbar.appendChild(thickBtn);
+
+let currentThickness = 2;
+
+function selectTool(btn: HTMLButtonElement, thickness: number) {
+  currentThickness = thickness;
+  thinBtn.classList.remove("selected");
+  thickBtn.classList.remove("selected");
+  btn.classList.add("selected");
+}
+
+thinBtn.addEventListener("click", () => selectTool(thinBtn, 2));
+thickBtn.addEventListener("click", () => selectTool(thickBtn, 8));
+
 const canvas = document.createElement("canvas");
 canvas.width = 256;
 canvas.height = 256;
@@ -11,7 +37,6 @@ canvas.className = "stage";
 document.body.appendChild(canvas);
 
 const ctx = canvas.getContext("2d")!;
-ctx.lineWidth = 4;
 ctx.lineCap = "round";
 ctx.strokeStyle = "#222";
 
@@ -23,9 +48,11 @@ interface DisplayCommand {
 
 class MarkerLine implements DisplayCommand {
   private points: Point[];
+  private thickness: number;
 
-  constructor(start: Point) {
+  constructor(start: Point, thickness: number) {
     this.points = [start];
+    this.thickness = thickness;
   }
 
   drag(x: number, y: number) {
@@ -34,6 +61,8 @@ class MarkerLine implements DisplayCommand {
 
   display(ctx: CanvasRenderingContext2D) {
     if (this.points.length < 2) return;
+    ctx.save();
+    ctx.lineWidth = this.thickness;
     ctx.beginPath();
     ctx.moveTo(this.points[0].x, this.points[0].y);
     for (let i = 1; i < this.points.length; i++) {
@@ -41,6 +70,7 @@ class MarkerLine implements DisplayCommand {
       ctx.lineTo(p.x, p.y);
     }
     ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -63,7 +93,7 @@ const pt = (e: MouseEvent): Point => ({ x: e.offsetX, y: e.offsetY });
 
 canvas.addEventListener("mousedown", (e: MouseEvent) => {
   drawing = true;
-  currentLine = new MarkerLine(pt(e));
+  currentLine = new MarkerLine(pt(e), currentThickness);
   commands.push(currentLine);
   redoCommands.length = 0;
   changed();
