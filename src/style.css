@@ -21,6 +21,12 @@ h1 {
   background: #fff;
 }
 
+.toolbar {
+  display: flex;
+  gap: 8px;
+}
+
+.tool-btn,
 .btn {
   padding: 6px 12px;
   border-radius: 6px;
@@ -28,23 +34,8 @@ h1 {
   background: #f6f6f6;
   cursor: pointer;
 }
+.tool-btn:hover,
 .btn:hover {
-  background: #eee;
-}
-
-.toolbar {
-  display: flex;
-  gap: 8px;
-}
-
-.tool-btn {
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f6f6f6;
-  cursor: pointer;
-}
-.tool-btn:hover {
   background: #eee;
 }
 .tool-btn.selected {
