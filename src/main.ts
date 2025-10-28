@@ -281,6 +281,27 @@ redoBtn.textContent = "Redo";
 redoBtn.className = "btn";
 controls.appendChild(redoBtn);
 
+const exportBtn = document.createElement("button");
+exportBtn.textContent = "Export PNG";
+exportBtn.className = "btn";
+controls.appendChild(exportBtn);
+
+exportBtn.addEventListener("click", () => {
+  const out = document.createElement("canvas");
+  out.width = 1024;
+  out.height = 1024;
+  const outCtx = out.getContext("2d")!;
+  outCtx.save();
+  outCtx.scale(out.width / canvas.width, out.height / canvas.height);
+  for (const cmd of commands) cmd.display(outCtx);
+  outCtx.restore();
+
+  const a = document.createElement("a");
+  a.href = out.toDataURL("image/png");
+  a.download = "sketchpad.png";
+  a.click();
+});
+
 clearBtn.addEventListener("click", () => {
   commands.length = 0;
   redoCommands.length = 0;
