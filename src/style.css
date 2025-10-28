@@ -23,7 +23,7 @@ h1 {
 
 .toolbar {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -45,7 +45,8 @@ h1 {
   background: #eaf2ff;
 }
 
-.thickness {
+.thickness,
+.hue {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -60,4 +61,29 @@ h1 {
   min-width: 36px;
   text-align: right;
   color: #333;
+}
+
+.hue input[type="range"] {
+  width: 180px;
+  background: linear-gradient(
+    to right,
+    hsl(0 85% 45%),
+    hsl(60 85% 45%),
+    hsl(120 85% 45%),
+    hsl(180 85% 45%),
+    hsl(240 85% 45%),
+    hsl(300 85% 45%),
+    hsl(360 85% 45%)
+  );
+  border-radius: 4px;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.hue-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #888;
+  display: inline-block;
 }

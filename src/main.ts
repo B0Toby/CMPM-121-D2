@@ -26,11 +26,37 @@ thicknessValue.textContent = `${thicknessInput.value}px`;
 thicknessWrap.append(thicknessInput, thicknessValue);
 toolbar.appendChild(thicknessWrap);
 
+const colorWrap = document.createElement("label");
+colorWrap.className = "hue";
+colorWrap.textContent = "Color: ";
+
+const hueInput = document.createElement("input");
+hueInput.type = "range";
+hueInput.min = "0";
+hueInput.max = "360";
+hueInput.step = "1";
+hueInput.value = "210";
+
+const hueSwatch = document.createElement("span");
+hueSwatch.className = "hue-swatch";
+
+colorWrap.append(hueInput, hueSwatch);
+toolbar.appendChild(colorWrap);
+
+const colorFromHue = (h: number) => `hsl(${h} 85% 45%)`;
+const applySwatch =
+  () => (hueSwatch.style.background = colorFromHue(Number(hueInput.value)));
+applySwatch();
+
 type Tool =
-  | { kind: "marker"; thickness: number }
+  | { kind: "marker"; thickness: number; color: string }
   | { kind: "sticker"; emoji: string };
 
-let tool: Tool = { kind: "marker", thickness: Number(thicknessInput.value) };
+let tool: Tool = {
+  kind: "marker",
+  thickness: Number(thicknessInput.value),
+  color: colorFromHue(Number(hueInput.value)),
+};
 
 const markSelected = (btn: HTMLButtonElement) => {
   for (const b of toolbar.querySelectorAll("button")) {
@@ -46,7 +72,11 @@ thinBtn.className = "tool-btn selected";
 thinBtn.onclick = () => {
   thicknessInput.value = "3";
   thicknessValue.textContent = "3px";
-  tool = { kind: "marker", thickness: 3 };
+  tool = {
+    kind: "marker",
+    thickness: 3,
+    color: colorFromHue(Number(hueInput.value)),
+  };
   markSelected(thinBtn);
 };
 toolbar.appendChild(thinBtn);
@@ -57,7 +87,11 @@ thickBtn.className = "tool-btn";
 thickBtn.onclick = () => {
   thicknessInput.value = "12";
   thicknessValue.textContent = "12px";
-  tool = { kind: "marker", thickness: 12 };
+  tool = {
+    kind: "marker",
+    thickness: 12,
+    color: colorFromHue(Number(hueInput.value)),
+  };
   markSelected(thickBtn);
 };
 toolbar.appendChild(thickBtn);
@@ -66,9 +100,28 @@ thicknessInput.addEventListener("input", () => {
   const t = Number(thicknessInput.value);
   thicknessValue.textContent = `${t}px`;
   if (tool.kind === "marker") {
-    tool = { kind: "marker", thickness: t };
+    tool = {
+      kind: "marker",
+      thickness: t,
+      color: colorFromHue(Number(hueInput.value)),
+    };
     if (preview instanceof MarkerPreview) {
-      preview.move(preview.x, preview.y, t);
+      preview.move(preview.x, preview.y, t, tool.color);
+    }
+    toolMoved();
+  }
+});
+
+hueInput.addEventListener("input", () => {
+  applySwatch();
+  if (tool.kind === "marker") {
+    tool = {
+      kind: "marker",
+      thickness: tool.thickness,
+      color: colorFromHue(Number(hueInput.value)),
+    };
+    if (preview instanceof MarkerPreview) {
+      preview.move(preview.x, preview.y, tool.thickness, tool.color);
     }
     toolMoved();
   }
@@ -124,7 +177,6 @@ document.body.appendChild(canvas);
 
 const ctx = canvas.getContext("2d")!;
 ctx.lineCap = "round";
-ctx.strokeStyle = "#222";
 
 type Point = { x: number; y: number };
 
@@ -134,7 +186,7 @@ interface DisplayCommand {
 
 class MarkerLine implements DisplayCommand {
   private points: Point[] = [];
-  constructor(start: Point, private thickness: number) {
+  constructor(start: Point, private thickness: number, private color: string) {
     this.points.push(start);
   }
   drag(x: number, y: number) {
@@ -143,6 +195,7 @@ class MarkerLine implements DisplayCommand {
   display(ctx: CanvasRenderingContext2D) {
     if (this.points.length < 2) return;
     ctx.save();
+    ctx.strokeStyle = this.color;
     ctx.lineWidth = this.thickness;
     ctx.beginPath();
     ctx.moveTo(this.points[0].x, this.points[0].y);
@@ -172,18 +225,24 @@ class Sticker implements DisplayCommand {
 }
 
 class MarkerPreview implements DisplayCommand {
-  constructor(public x: number, public y: number, public thickness: number) {}
-  move(x: number, y: number, thickness: number) {
+  constructor(
+    public x: number,
+    public y: number,
+    public thickness: number,
+    public color: string,
+  ) {}
+  move(x: number, y: number, thickness: number, color: string) {
     this.x = x;
     this.y = y;
     this.thickness = thickness;
+    this.color = color;
   }
   display(ctx: CanvasRenderingContext2D) {
     const r = this.thickness / 2;
     ctx.save();
     ctx.beginPath();
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "#000";
+    ctx.strokeStyle = this.color;
     ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
@@ -233,7 +292,7 @@ const pt = (e: MouseEvent): Point => ({ x: e.offsetX, y: e.offsetY });
 
 canvas.addEventListener("mouseenter", (e) => {
   preview = tool.kind === "marker"
-    ? new MarkerPreview(e.offsetX, e.offsetY, tool.thickness)
+    ? new MarkerPreview(e.offsetX, e.offsetY, tool.thickness, tool.color)
     : new StickerPreview(e.offsetX, e.offsetY, tool.emoji);
   toolMoved();
 });
@@ -255,16 +314,16 @@ canvas.addEventListener("mousemove", (e: MouseEvent) => {
   } else {
     if (!preview) {
       preview = tool.kind === "marker"
-        ? new MarkerPreview(e.offsetX, e.offsetY, tool.thickness)
+        ? new MarkerPreview(e.offsetX, e.offsetY, tool.thickness, tool.color)
         : new StickerPreview(e.offsetX, e.offsetY, tool.emoji);
     } else {
       if (preview instanceof MarkerPreview && tool.kind === "marker") {
-        preview.move(e.offsetX, e.offsetY, tool.thickness);
+        preview.move(e.offsetX, e.offsetY, tool.thickness, tool.color);
       } else if (preview instanceof StickerPreview && tool.kind === "sticker") {
         preview.move(e.offsetX, e.offsetY, tool.emoji);
       } else {
         preview = tool.kind === "marker"
-          ? new MarkerPreview(e.offsetX, e.offsetY, tool.thickness)
+          ? new MarkerPreview(e.offsetX, e.offsetY, tool.thickness, tool.color)
           : new StickerPreview(e.offsetX, e.offsetY, tool.emoji);
       }
     }
@@ -275,7 +334,7 @@ canvas.addEventListener("mousemove", (e: MouseEvent) => {
 canvas.addEventListener("mousedown", (e: MouseEvent) => {
   drawing = true;
   if (tool.kind === "marker") {
-    currentLine = new MarkerLine(pt(e), tool.thickness);
+    currentLine = new MarkerLine(pt(e), tool.thickness, tool.color);
     commands.push(currentLine);
   } else {
     currentSticker = new Sticker(e.offsetX, e.offsetY, tool.emoji);
