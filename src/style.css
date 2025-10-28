@@ -15,7 +15,7 @@ h1 {
 }
 
 .stage {
-  border: 1px solid #111;
+  border: 2px solid #111;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   background: #fff;
@@ -24,6 +24,8 @@ h1 {
 .toolbar {
   display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .tool-btn,
@@ -41,4 +43,21 @@ h1 {
 .tool-btn.selected {
   outline: 2px solid #4a90e2;
   background: #eaf2ff;
+}
+
+.thickness {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.thickness input[type="range"] {
+  width: 160px;
+}
+
+.thickness-value {
+  min-width: 36px;
+  text-align: right;
+  color: #333;
 }

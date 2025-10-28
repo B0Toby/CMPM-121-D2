@@ -8,11 +8,29 @@ const toolbar = document.createElement("div");
 toolbar.className = "toolbar";
 document.body.appendChild(toolbar);
 
+const thicknessWrap = document.createElement("label");
+thicknessWrap.className = "thickness";
+thicknessWrap.textContent = "Thickness: ";
+
+const thicknessInput = document.createElement("input");
+thicknessInput.type = "range";
+thicknessInput.min = "1";
+thicknessInput.max = "24";
+thicknessInput.step = "1";
+thicknessInput.value = "3";
+
+const thicknessValue = document.createElement("span");
+thicknessValue.className = "thickness-value";
+thicknessValue.textContent = `${thicknessInput.value}px`;
+
+thicknessWrap.append(thicknessInput, thicknessValue);
+toolbar.appendChild(thicknessWrap);
+
 type Tool =
   | { kind: "marker"; thickness: number }
   | { kind: "sticker"; emoji: string };
 
-let tool: Tool = { kind: "marker", thickness: 2 };
+let tool: Tool = { kind: "marker", thickness: Number(thicknessInput.value) };
 
 const markSelected = (btn: HTMLButtonElement) => {
   for (const b of toolbar.querySelectorAll("button")) {
@@ -26,7 +44,9 @@ const thinBtn = document.createElement("button");
 thinBtn.textContent = "Thin";
 thinBtn.className = "tool-btn selected";
 thinBtn.onclick = () => {
-  tool = { kind: "marker", thickness: 2 };
+  thicknessInput.value = "3";
+  thicknessValue.textContent = "3px";
+  tool = { kind: "marker", thickness: 3 };
   markSelected(thinBtn);
 };
 toolbar.appendChild(thinBtn);
@@ -35,10 +55,24 @@ const thickBtn = document.createElement("button");
 thickBtn.textContent = "Thick";
 thickBtn.className = "tool-btn";
 thickBtn.onclick = () => {
-  tool = { kind: "marker", thickness: 8 };
+  thicknessInput.value = "12";
+  thicknessValue.textContent = "12px";
+  tool = { kind: "marker", thickness: 12 };
   markSelected(thickBtn);
 };
 toolbar.appendChild(thickBtn);
+
+thicknessInput.addEventListener("input", () => {
+  const t = Number(thicknessInput.value);
+  thicknessValue.textContent = `${t}px`;
+  if (tool.kind === "marker") {
+    tool = { kind: "marker", thickness: t };
+    if (preview instanceof MarkerPreview) {
+      preview.move(preview.x, preview.y, t);
+    }
+    toolMoved();
+  }
+});
 
 const stickerRow = document.createElement("div");
 stickerRow.style.display = "flex";
