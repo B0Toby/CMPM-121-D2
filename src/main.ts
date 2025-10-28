@@ -40,17 +40,46 @@ thickBtn.onclick = () => {
 };
 toolbar.appendChild(thickBtn);
 
-const stickers = ["🎮", "⭐", "💩"];
-for (const emoji of stickers) {
-  const b = document.createElement("button");
-  b.textContent = emoji;
-  b.className = "tool-btn";
-  b.onclick = () => {
-    tool = { kind: "sticker", emoji };
-    markSelected(b);
+const stickerRow = document.createElement("div");
+stickerRow.style.display = "flex";
+stickerRow.style.gap = "8px";
+toolbar.appendChild(stickerRow);
+
+const stickers: string[] = ["🎮", "⭐", "💩"];
+
+function renderStickerButtons() {
+  stickerRow.innerHTML = "";
+
+  for (const emoji of stickers) {
+    const b = document.createElement("button");
+    b.textContent = emoji;
+    b.className = "tool-btn";
+    b.onclick = () => {
+      tool = { kind: "sticker", emoji };
+      markSelected(b);
+    };
+    stickerRow.appendChild(b);
+  }
+
+  const addBtn = document.createElement("button");
+  addBtn.textContent = "Custom";
+  addBtn.className = "tool-btn";
+  addBtn.onclick = () => {
+    const txt = prompt("Custom sticker text", "🧽");
+    if (txt === null) return;
+    const value = txt.trim();
+    if (value.length === 0) return;
+    stickers.push(value);
+    renderStickerButtons();
+    const lastBtn = stickerRow.querySelectorAll(
+      "button",
+    )[stickers.length - 1] as HTMLButtonElement;
+    tool = { kind: "sticker", emoji: value };
+    markSelected(lastBtn);
   };
-  toolbar.appendChild(b);
+  stickerRow.appendChild(addBtn);
 }
+renderStickerButtons();
 
 const canvas = document.createElement("canvas");
 canvas.width = 256;
@@ -169,11 +198,9 @@ const toolMoved = () => canvas.dispatchEvent(new Event("tool-moved"));
 const pt = (e: MouseEvent): Point => ({ x: e.offsetX, y: e.offsetY });
 
 canvas.addEventListener("mouseenter", (e) => {
-  if (tool.kind === "marker") {
-    preview = new MarkerPreview(e.offsetX, e.offsetY, tool.thickness);
-  } else {
-    preview = new StickerPreview(e.offsetX, e.offsetY, tool.emoji);
-  }
+  preview = tool.kind === "marker"
+    ? new MarkerPreview(e.offsetX, e.offsetY, tool.thickness)
+    : new StickerPreview(e.offsetX, e.offsetY, tool.emoji);
   toolMoved();
 });
 
